@@ -1,37 +1,39 @@
-const http = require('http');
-const fs = require('fs');
+const http = require("http");
+const url = require("url");
+const StringDecoder = require("string_decoder").StringDecoder;
+const util = require("util");
+const formidable = require("formidable");
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/storeData' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      const data = JSON.parse(body);
-      fs.writeFile('storedData.json', JSON.stringify(data), err => {
-        if (err) {
-          console.error(err);
-          res.writeHead(500, {'Content-Type': 'text/plain'});
-          res.end('Error storing data');
-        } else {
-          res.writeHead(200, {'Content-Type': 'text/plain'});
-          res.end('Data stored successfully');
-        }
-      });
-    });
-  }
-  else if(req.url === '/'){
-    res.writeHead(200, {'Content-Type': 'text.html'})
-    res.write('<h1>Hello, World!</h1>')
-    res.end()
-  }
-   else {
-    res.writeHead(404, {'Content-Type': 'text/plain'});
-    res.end('Page not found');
-  }
-});
+const server = http.createServer(function(req, res) {
 
-server.listen(3000, () => {
-  console.log('Server running at http://localhost:3000/');
+  console.log(req.url)
+
+  let path = url.parse(req.url, true)
+
+  if(req.method.toLowerCase() == 'post'){
+    let form = new formidable.IncomingForm()
+    form.parse(req, function(err, fields, files){
+      if(err){
+        console.error(err.message)
+        return
+      }
+      res.writeHead(200, "OK", {'Content-Type':'text/plain'})
+      res.write('The POST output response')
+      res.end(util.inspect({fields:files, files:files}))
+    })
+  }
+  else if(req.method.toLowerCase()=='get'){
+    res.writeHead(200, "OK", {"Content-Type": "text/plain"})
+    res.write("The response\n\n")
+    res.write(util.inspect(path.query)+"\n\n")
+    res.end("End of Message to Browser")
+  }
+
+  else{
+
+  }
+})
+
+server.listen(3000, function() {
+  console.log("Listening on port 3000");
 });
